@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/shekhei/go-engine.io-client?status.svg)](https://godoc.org/github.com/shekhei/go-engine.io-client)
+
 # go-engine.io-client(works, but still very early stage)
 golang engine.io-client
 
