@@ -32,7 +32,7 @@ func TestClient(test* testing.T) {
   Loop:
     for {
       select {
-        case ev := <- client.event:
+      case ev := <- client.Event:
           if !opened {
             HandleNotOpen(test, ev, client)
           } else {
@@ -60,7 +60,7 @@ func TestClientMessaging(test* testing.T) {
   Loop:
     for {
       select {
-        case ev := <- client.event:
+      case ev := <- client.Event:
           if "open" == ev.Type {
             client.SendMessage(&SendingObj{Type: "echo", Msg: timestamp})
           } else if "message" == ev.Type {

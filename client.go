@@ -15,7 +15,7 @@ type Client struct {
   Conn *websocket.Conn
   sender chan *Packet
   receiver chan *Packet
-  event chan *Event
+  Event chan *Event
   done chan bool
   opened bool
 }
@@ -26,7 +26,7 @@ func NewClient(conn *websocket.Conn) (*Client) {
     opened: false,
     sender: make(chan *Packet),
     receiver: make(chan *Packet),
-    event: make(chan *Event),
+    Event: make(chan *Event),
     done: make(chan bool),
   }
 }
@@ -74,7 +74,7 @@ func Dial(urlStr string) (client *Client, err error) {
           event = nil
       }
       if nil != event {
-        client.event <- event
+        client.Event <- event
       }
     }
   }()
