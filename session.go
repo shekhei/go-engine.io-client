@@ -1,4 +1,4 @@
-package main
+package engineio
 
 type Session struct {
   ID string

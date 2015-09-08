@@ -1,4 +1,4 @@
-package main
+package engineio
 
 import (
   "github.com/gorilla/websocket"
