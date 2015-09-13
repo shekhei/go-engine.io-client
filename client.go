@@ -4,12 +4,16 @@ import (
   "github.com/gorilla/websocket"
   "log"
   "encoding/json"
+  "reflect"
+  "time"
 )
 
 type Event struct {
   Type string
   Data []byte
 }
+
+var closeErrorType = reflect.TypeOf((*websocket.CloseError)(nil))
 
 type Client struct {
   Conn *websocket.Conn
@@ -24,7 +28,7 @@ func NewClient(conn *websocket.Conn) (*Client) {
   return &Client{
     Conn: conn,
     opened: false,
-    sender: make(chan *Packet),
+    sender: make(chan *Packet, 5),
     receiver: make(chan *Packet),
     Event: make(chan *Event),
     done: make(chan bool),
@@ -34,17 +38,25 @@ func NewClient(conn *websocket.Conn) (*Client) {
 func Dial(urlStr string) (client *Client, err error) {
   urlStr += "/engine.io/?transport=websocket"
   log.Println(urlStr)
-  conn, _, err := websocket.DefaultDialer.Dial(urlStr, nil)
-  if nil != err {
-    return
-  }
-  client = NewClient(conn)
+  client = NewClient(nil)
   go func(){
     // listens for open event, and then make it open
     for {
+      if nil == client.Conn {
+        continue
+      }
       _, res, err := client.Conn.ReadMessage()
       if nil != err {
-        panic(err)
+        t := reflect.TypeOf(err)
+        log.Println("error, %T(%q)", t, err)
+        if closeErrorType == t {
+          client.Conn = nil
+          // handle reconnections
+          client.receiver <- NewClosePacket()
+        } else {
+          panic(err)
+        }
+
       }
       log.Printf("%s", string(res))
       packet := BytesToPacket(res)
@@ -79,14 +91,40 @@ func Dial(urlStr string) (client *Client, err error) {
     }
   }()
   go func() {
+    // reconnection ticker
+    ticker := time.NewTicker(1* time.Second)
+    for {
+      select {
+        case _ = <- ticker.C:
+          // do reconnection here if client is not connected
+          log.Println("reconnecting ticker")
+          if nil == client.Conn {
+            log.Println("reconnecting")
+            conn, _, err := websocket.DefaultDialer.Dial(urlStr, nil)
+            if nil != err {
+              log.Println("reconnecting fucked up %q", err)
+              break
+            }
+            log.Println("reconnecting succeeded")
+            client.Conn = conn
+          }
+        default:
+      }
+    }
+  }()
+  go func() {
     for {
       select {
         case p := <-client.sender:
+          if client.Conn == nil {
+            break
+          }
           err := client.Conn.WriteMessage(websocket.TextMessage, PacketToBytes(p))
           if nil != err {
             panic(err)
           }
         default:
+
       }
     }
   }()
@@ -95,9 +133,11 @@ func Dial(urlStr string) (client *Client, err error) {
 
 func (c *Client) SendMessage(obj interface{}) {
   result, err := json.Marshal(obj)
+
   if nil != err {
     panic(err)
   }
+  log.Printf(string(result))
   c.sender <- NewPacket(Message, result)
 }
 

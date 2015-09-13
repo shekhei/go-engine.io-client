@@ -30,6 +30,10 @@ func NewPacket(pType PacketType, content []byte) (*Packet) {
   return &Packet{pType, content}
 }
 
+func NewClosePacket() (*Packet) {
+  return &Packet{Close, nil}
+}
+
 func BytesToPacket(from []byte) (to *Packet) {
   return &Packet{Type: PacketType(from[0]), Data: from[1:]}
 }
