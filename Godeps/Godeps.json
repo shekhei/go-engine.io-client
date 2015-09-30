@@ -1,0 +1,10 @@
+{
+	"ImportPath": "github.com/shekhei/go-engine.io-client",
+	"GoVersion": "go1.5",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "b6ab76f1fe9803ee1d59e7e5b2a797c1fe897ce5"
+		}
+	]
+}
