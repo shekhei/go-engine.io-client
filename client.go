@@ -36,8 +36,18 @@ func NewClient(conn *websocket.Conn) *Client {
 	}
 }
 
-func Dial(urlStr string) (client *Client, err error) {
-	urlStr += "/engine.io/?transport=websocket"
+func Dial(urlStr string, extras map[string]string) (client *Client, err error) {
+	if nil == extras {
+		extras = make(map[string]string)
+	}
+	if nil != extras {
+		extras["transport"] = "websocket"
+	}
+	querystring := ""
+	for k, v := range extras {
+		querystring += "&" + k + "=" + v
+	}
+	urlStr += "/engine.io/?" + querystring
 	log.Println(urlStr)
 	client = NewClient(nil)
 	go func() {
